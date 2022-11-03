@@ -1,39 +1,14 @@
-TOP=..
+# Makefile at top of application tree
+TOP = ..
 include $(TOP)/configure/CONFIG
-#=======================================
 
-# Build devFer as a library for an IOC:
-LIBRARY_$(APP_ARCH) += devFer
-LIBRARY = $(LIBRARY_$(T_A))
+# Directories to be built, in any order.
+# You can replace these wildcards with an explicit list
+DIRS += $(wildcard src* *Src*)
+DIRS += $(wildcard db* *Db*)
 
-# Library includes
-INCLUDES += \
-	-DUSE_TYPED_RSET
+# If the build order matters, add dependency rules like this,
+# which specifies that xxxSrc must be built after src:
+#xxxSrc_DEPEND_DIRS += src
 
-# Library Source files
-devFer_SRCS += \
-	devFer.c \
-	_interface.c \
-	_record.c \
-	_array_record.c \
-	ai.c \
-	ao.c \
-	aai.c \
-	aao.c \
-	waveform.c \
-	bi.c \
-	bo.c \
-	mbbi_direct.c \
-	mbbo_direct.c
-
-# Link with the libraries
-devFer_LIBS += $(EPICS_BASE_IOC_LIBS)
-
-# Link app
-include $(TOP)/link_app.mk
-
-# Install .dbd and .db files
-DBD += devFer.dbd
-
-#=======================================
-include $(TOP)/configure/RULES
+include $(TOP)/configure/RULES_DIRS
