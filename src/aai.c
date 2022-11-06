@@ -1,8 +1,10 @@
 #include <stdlib.h>
+#include <string.h>
 
 #include <aaiRecord.h>
 #include <devSup.h>
 #include <epicsExport.h>
+#include <epicsTypes.h>
 #include <recGbl.h>
 
 #include "_array_record.h"
@@ -17,8 +19,14 @@ static long init(aaiRecord *rec) {
         rec->nelm,
     };
     var_info->item_size = fer_epics_scalar_type_size((menuFtype)rec->ftvl);
-    var_info->base.data = NULL;
-    var_info->len_ptr = &rec->nord;
+
+    // Create additional buffer to store copy of data.
+    // See note in `read` function below.
+    var_info->locked_data = malloc(rec->nelm * var_info->item_size);
+    var_info->locked_len = 0;
+
+    var_info->base.data = var_info->locked_data;
+    var_info->len_ptr = &var_info->locked_len;
 
     fer_epics_record_init((dbCommon *)rec, FER_EPICS_RECORD_TYPE_AAI, (FerEpicsVar *)var_info);
     return 0;
@@ -31,7 +39,14 @@ static long get_ioint_info(int cmd, aaiRecord *rec, IOSCANPVT *ppvt) {
 
 static long read(aaiRecord *rec) {
     FerEpicsVarArray *var_info = (FerEpicsVarArray *)fer_epics_record_var_info((dbCommon *)rec);
-    var_info->base.data = (void *)rec->bptr;
+
+    // `aaoRecord->(bptr/nord)` can be read even if record is processing (`PACT` is true).
+    // To mitigate this issue we copy data and length only on processing completion.
+    if (rec->pact) {
+        const epicsUInt32 len = var_info->locked_len;
+        memcpy(rec->bptr, var_info->locked_data, len * var_info->item_size);
+        rec->nord = len;
+    }
 
     fer_epics_record_process((dbCommon *)rec);
     return 0;

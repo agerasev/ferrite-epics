@@ -4,6 +4,7 @@
 #include <aaoRecord.h>
 #include <devSup.h>
 #include <epicsExport.h>
+#include <epicsTypes.h>
 #include <recGbl.h>
 
 #include "_array_record.h"
@@ -18,6 +19,7 @@ static long init(aaoRecord *rec) {
         rec->nelm,
     };
     var_info->item_size = fer_epics_scalar_type_size((menuFtype)rec->ftvl);
+
     // Create additional buffer to store copy of data.
     // See note in `write` function below.
     var_info->locked_data = malloc(rec->nelm * var_info->item_size);
@@ -37,10 +39,14 @@ static long get_ioint_info(int cmd, aaoRecord *rec, IOSCANPVT *ppvt) {
 
 static long write(aaoRecord *rec) {
     FerEpicsVarArray *var_info = (FerEpicsVarArray *)fer_epics_record_var_info((dbCommon *)rec);
+
     // `aaoRecord->(bptr/nord)` are updated on write even if record is processing (`PACT` is true).
     // To mitigate this issue we make a copy of data and length on processing start.
-    memcpy(var_info->locked_data, rec->bptr, rec->nord * var_info->item_size);
-    var_info->locked_len = rec->nord;
+    if (!rec->pact) {
+        const epicsUInt32 len = rec->nord;
+        memcpy(var_info->locked_data, rec->bptr, len * var_info->item_size);
+        var_info->locked_len = len;
+    }
 
     fer_epics_record_process((dbCommon *)rec);
     return 0;
