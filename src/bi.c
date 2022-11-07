@@ -12,10 +12,10 @@ static long init(biRecord *rec) {
     var_info->type = (FerVarType){
         FER_VAR_KIND_SCALAR,
         FER_VAR_DIR_WRITE,
-        FER_VAR_SCALAR_TYPE_U32,
+        FER_VAR_SCALAR_TYPE_U16,
         1,
     };
-    var_info->data = (void *)(&rec->rval);
+    var_info->data = (void *)(&rec->val);
 
     fer_epics_record_init((dbCommon *)rec, FER_EPICS_RECORD_TYPE_BI, var_info);
     return 0;

@@ -1,5 +1,8 @@
 #include "_array_record.h"
 
+#include <stdlib.h>
+#include <string.h>
+
 #include "_assert.h"
 
 FerEpicsVarArray *fer_epics_record_var_array_info(dbCommon *rec) {
@@ -55,5 +58,45 @@ size_t fer_epics_scalar_type_size(menuFtype ftype) {
         return 8;
     default:
         return 0;
+    }
+}
+
+void fer_epics_record_array_init(dbCommon *rec, FerEpicsRecordType type, FerEpicsVarArray *var_info) {
+    // Create additional buffer to store copy of data.
+    // See note in `fer_epics_record_array_copy_data` function below.
+    var_info->locked_data = malloc(var_info->base.type.array_max_len * var_info->item_size);
+    var_info->locked_len = 0;
+
+    var_info->base.data = var_info->locked_data;
+    var_info->len_ptr = &var_info->locked_len;
+
+    fer_epics_record_init(rec, type, (FerEpicsVar *)var_info);
+}
+
+void fer_epics_record_array_deinit(dbCommon *rec) {
+    FerEpicsVarArray *var_info = fer_epics_record_var_array_info(rec);
+
+    if (var_info->locked_data != NULL) {
+        free(var_info->locked_data);
+    }
+
+    fer_epics_record_deinit(rec);
+}
+
+void fer_epics_record_array_copy_data(dbCommon *rec, void *data, epicsUInt32 *len_ptr) {
+    FerEpicsVarArray *var_info = fer_epics_record_var_array_info(rec);
+
+    // Array record contents can be updated even if record is processing (`PACT` is true).
+    // To avoid data race we provide to user not an original data but a copy of it.
+    if (!rec->pact) {
+        const epicsUInt32 len = *len_ptr;
+        fer_epics_assert(len <= var_info->base.type.array_max_len);
+        memcpy(var_info->locked_data, data, len * var_info->item_size);
+        var_info->locked_len = len;
+    } else {
+        const epicsUInt32 len = var_info->locked_len;
+        fer_epics_assert(len <= var_info->base.type.array_max_len);
+        memcpy(data, var_info->locked_data, len * var_info->item_size);
+        *len_ptr = len;
     }
 }

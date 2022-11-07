@@ -17,6 +17,8 @@ typedef enum FerEpicsRecordType {
     FER_EPICS_RECORD_TYPE_AAO,
     FER_EPICS_RECORD_TYPE_MBBI_DIRECT,
     FER_EPICS_RECORD_TYPE_MBBO_DIRECT,
+    FER_EPICS_RECORD_TYPE_STRINGIN,
+    FER_EPICS_RECORD_TYPE_STRINGOUT,
 } FerEpicsRecordType;
 
 typedef struct FerEpicsVar {

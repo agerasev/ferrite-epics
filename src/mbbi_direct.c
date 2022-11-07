@@ -15,7 +15,7 @@ static long init(mbbiDirectRecord *rec) {
         FER_VAR_SCALAR_TYPE_U32,
         1,
     };
-    var_info->data = (void *)(&rec->rval);
+    var_info->data = (void *)(&rec->val);
 
     fer_epics_record_init((dbCommon *)rec, FER_EPICS_RECORD_TYPE_MBBI_DIRECT, var_info);
     return 0;

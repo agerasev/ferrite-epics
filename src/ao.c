@@ -12,10 +12,10 @@ static long init(aoRecord *rec) {
     var_info->type = (FerVarType){
         FER_VAR_KIND_SCALAR,
         FER_VAR_DIR_READ,
-        FER_VAR_SCALAR_TYPE_I32,
+        FER_VAR_SCALAR_TYPE_F64,
         1,
     };
-    var_info->data = (void *)(&rec->rval);
+    var_info->data = (void *)(&rec->val);
 
     fer_epics_record_init((dbCommon *)rec, FER_EPICS_RECORD_TYPE_AO, var_info);
     return 0;
