@@ -1,6 +1,7 @@
 #pragma once
 
 #include <stddef.h>
+#include <stdint.h>
 
 /// Opaque variable.
 typedef struct FerVar FerVar;
@@ -19,7 +20,7 @@ typedef uint32_t FerVarPerm;
 #define FER_VAR_PERM_NOTIFY ((FerVarPerm)4)
 
 /// Variable value type.
-typedef enum {
+typedef enum FerVarType {
     FER_VAR_TYPE_U8 = 0,
     FER_VAR_TYPE_I8,
     FER_VAR_TYPE_U16,
@@ -33,7 +34,7 @@ typedef enum {
 } FerVarType;
 
 /// Information about variable.
-typedef struct {
+typedef struct FerVarInfo {
     /// Permissions of the variable.
     FerVarPerm perm;
     /// Type of variable itself or its items.
@@ -43,7 +44,7 @@ typedef struct {
 } FerVarInfo;
 
 /// Variable value.
-typedef struct {
+typedef struct FerVarValue {
     /// Pointer to variable data that must be interpreted according to variable type and length.
     /// Must not be overwritten itself, only data it points to.
     void *data;
@@ -63,8 +64,8 @@ void fer_app_exit(int code);
 
 /// Initialize variable.
 extern void fer_var_init(FerVar *var);
-/// Notify that variable is ready to process (read or write).
-void fer_var_notify(FerVar *var);
+/// Request variable processing (read or write).
+void fer_var_request(FerVar *var);
 /// Asynchronous variable processing begin.
 /// NOTE: Variable passed to this function is automatically locked during the call.
 extern void fer_var_proc_begin(FerVar *var);
@@ -77,7 +78,6 @@ void fer_var_write_complete(FerVar *var, FerVarStatus status);
 extern void fer_var_proc_end(FerVar *var);
 
 /// Lock variable.
-/// Following operations require variable to be locked.
 void fer_var_lock(FerVar *var);
 /// Unlock variable.
 void fer_var_unlock(FerVar *var);
@@ -87,7 +87,8 @@ const char *fer_var_name(FerVar *var);
 /// Variable permissions.
 FerVarInfo fer_var_info(FerVar *var);
 /// Get pointer to variable value.
-FerVarValue *fer_var_data(FerVar *var);
+/// *Requires variable to be locked.*
+FerVarValue *fer_var_value(FerVar *var);
 
 /// Get user data.
 void *fer_var_user_data(FerVar *var);

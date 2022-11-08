@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <string.h>
 
 #include <devSup.h>
 #include <epicsExport.h>
@@ -6,42 +7,33 @@
 #include <recGbl.h>
 #include <stringinRecord.h>
 
-#include "_array_record.h"
-#include "_assert.h"
+#include "_macros.h"
 #include "_record.h"
 
-#define VAL_LEN 40
-
 static long init(stringinRecord *rec) {
-    FerEpicsVarArray *var_info = (FerEpicsVarArray *)malloc(sizeof(FerEpicsVarArray));
-    var_info->base.type = (FerVarType){
-        FER_VAR_KIND_ARRAY,
-        FER_VAR_DIR_WRITE,
-        FER_VAR_SCALAR_TYPE_U8,
-        VAL_LEN - 1,
-    };
-    var_info->item_size = 1;
+    FerEpicsVar *var = fer_epics_var_create((FerVarInfo){
+        .perm = FER_VAR_PERM_WRITE,
+        .type = FER_VAR_TYPE_U8,
+        .max_len = STRING_LEN - 1,
+    });
 
-    fer_epics_record_array_init((dbCommon *)rec, FER_EPICS_RECORD_TYPE_STRINGIN, var_info);
+    fer_epics_record_init((dbCommon *)rec, var);
     return 0;
 }
 
-static long get_ioint_info(int cmd, stringinRecord *rec, IOSCANPVT *ppvt) {
-    *ppvt = fer_epics_record_ioscan_create((dbCommon *)rec);
-    return 0;
-}
+GET_IOINT_INFO(stringinRecord)
+
+STRING_STORE(_load, stringinRecord)
+STRING_LOAD(_store, stringinRecord)
 
 static long read(stringinRecord *rec) {
-    FerEpicsVarArray *var_info = (FerEpicsVarArray *)fer_epics_record_var_info((dbCommon *)rec);
+    static const FerEpicsRecordInfo info = {
+        .dir = FER_EPICS_RECORD_DIR_INPUT,
+        .load = (FerEpicsRecordLoadFunc)_load,
+        .store = (FerEpicsRecordStoreFunc)_store,
+    };
 
-    if (rec->pact) {
-        epicsUInt32 len = var_info->locked_len;
-        fer_epics_record_array_copy_data((dbCommon *)rec, rec->val, &len);
-        ((char *)rec->val)[len] = '\0';
-    }
-
-    fer_epics_record_process((dbCommon *)rec);
-    return 0;
+    return fer_epics_record_process((dbCommon *)rec, &info);
 }
 
 struct StringinRecordCallbacks {

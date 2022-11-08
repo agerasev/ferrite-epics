@@ -5,30 +5,33 @@
 #include <mbboDirectRecord.h>
 #include <recGbl.h>
 
+#include "_macros.h"
 #include "_record.h"
 
 static long init(mbboDirectRecord *rec) {
-    FerEpicsVar *var_info = (FerEpicsVar *)malloc(sizeof(FerEpicsVar));
-    var_info->type = (FerVarType){
-        FER_VAR_KIND_SCALAR,
-        FER_VAR_DIR_READ,
-        FER_VAR_SCALAR_TYPE_U32,
-        1,
-    };
-    var_info->data = (void *)(&rec->val);
+    FerEpicsVar *var = fer_epics_var_create((FerVarInfo){
+        .perm = FER_VAR_PERM_READ | FER_VAR_PERM_WRITE,
+        .type = FER_VAR_TYPE_U32,
+        .max_len = 0,
+    });
 
-    fer_epics_record_init((dbCommon *)rec, FER_EPICS_RECORD_TYPE_MBBO_DIRECT, var_info);
+    fer_epics_record_init((dbCommon *)rec, var);
     return 0;
 }
 
-static long get_ioint_info(int cmd, mbboDirectRecord *rec, IOSCANPVT *ppvt) {
-    *ppvt = fer_epics_record_ioscan_create((dbCommon *)rec);
-    return 0;
-}
+GET_IOINT_INFO(mbboDirectRecord)
+
+SCALAR_STORE(_store, mbboDirectRecord)
+SCALAR_LOAD(_load, mbboDirectRecord)
 
 static long write(mbboDirectRecord *rec) {
-    fer_epics_record_process((dbCommon *)rec);
-    return 0;
+    static const FerEpicsRecordInfo info = {
+        .dir = FER_EPICS_RECORD_DIR_OUTPUT,
+        .load = (FerEpicsRecordLoadFunc)_load,
+        .store = (FerEpicsRecordStoreFunc)_store,
+    };
+
+    return fer_epics_record_process((dbCommon *)rec, &info);
 }
 
 struct MbboDirectRecordCallbacks {

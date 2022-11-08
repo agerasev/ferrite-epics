@@ -6,35 +6,33 @@
 #include <epicsTypes.h>
 #include <recGbl.h>
 
-#include "_array_record.h"
+#include "_macros.h"
 #include "_record.h"
 
 static long init(aaoRecord *rec) {
-    FerEpicsVarArray *var_info = (FerEpicsVarArray *)malloc(sizeof(FerEpicsVarArray));
-    var_info->base.type = (FerVarType){
-        FER_VAR_KIND_ARRAY,
-        FER_VAR_DIR_READ,
-        fer_epics_convert_scalar_type((menuFtype)rec->ftvl),
-        rec->nelm,
-    };
-    var_info->item_size = fer_epics_scalar_type_size((menuFtype)rec->ftvl);
+    FerEpicsVar *var = fer_epics_var_create((FerVarInfo){
+        .perm = FER_VAR_PERM_READ | FER_VAR_PERM_WRITE,
+        .type = fer_epics_convert_type((menuFtype)rec->ftvl),
+        .max_len = rec->nelm,
+    });
 
-    fer_epics_record_array_init((dbCommon *)rec, FER_EPICS_RECORD_TYPE_AAO, var_info);
+    fer_epics_record_init((dbCommon *)rec, var);
     return 0;
 }
 
-static long get_ioint_info(int cmd, aaoRecord *rec, IOSCANPVT *ppvt) {
-    *ppvt = fer_epics_record_ioscan_create((dbCommon *)rec);
-    return 0;
-}
+GET_IOINT_INFO(aaoRecord)
+
+ARRAY_STORE(_store, aaoRecord)
+ARRAY_LOAD(_load, aaoRecord)
 
 static long write(aaoRecord *rec) {
-    if (!rec->pact) {
-        fer_epics_record_array_copy_data((dbCommon *)rec, rec->bptr, &rec->nord);
-    }
+    static const FerEpicsRecordInfo info = {
+        .dir = FER_EPICS_RECORD_DIR_OUTPUT,
+        .load = (FerEpicsRecordLoadFunc)_load,
+        .store = (FerEpicsRecordStoreFunc)_store,
+    };
 
-    fer_epics_record_process((dbCommon *)rec);
-    return 0;
+    return fer_epics_record_process((dbCommon *)rec, &info);
 }
 
 struct AaoRecordCallbacks {
