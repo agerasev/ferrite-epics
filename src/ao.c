@@ -31,7 +31,12 @@ static long write(aoRecord *rec) {
         .store = (FerEpicsRecordStoreFunc)_store,
     };
 
-    return fer_epics_record_process((dbCommon *)rec, &info);
+    long st = fer_epics_record_process((dbCommon *)rec, &info);
+    if (st == 0) {
+        return 2;
+    } else {
+        return st;
+    }
 }
 
 static long linconv(aoRecord *rec, int after) {

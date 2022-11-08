@@ -11,7 +11,7 @@ void fer_app_exit(int code) {
     epicsExit(code);
 }
 
-void fer_var_notify(FerVar *var) {
+void fer_var_request(FerVar *var) {
     fer_epics_record_request_proc((dbCommon *)var);
 }
 
