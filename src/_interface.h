@@ -5,45 +5,54 @@
 /// Opaque variable.
 typedef struct FerVar FerVar;
 
-/// Kind of variable.
-typedef enum FerVarKind {
-    FER_VAR_KIND_SCALAR = 0,
-    FER_VAR_KIND_ARRAY,
-} FerVarKind;
+/// Variable processing status.
+typedef enum {
+    FER_VAR_STATUS_OK = 0,
+    FER_VAR_STATUS_ERROR,
+} FerVarStatus;
 
-/// Direction of the variable.
-typedef enum FerVarDir {
-    FER_VAR_DIR_READ = 0,
-    FER_VAR_DIR_WRITE,
-} FerVarDir;
+/// Permissions the variable.
+typedef uint32_t FerVarPerm;
 
-/// Scalar value type.
-typedef enum FerVarScalarType {
-    /// Variable does not contain scalars.
-    FER_VAR_SCALAR_TYPE_NONE = 0,
-    FER_VAR_SCALAR_TYPE_U8,
-    FER_VAR_SCALAR_TYPE_I8,
-    FER_VAR_SCALAR_TYPE_U16,
-    FER_VAR_SCALAR_TYPE_I16,
-    FER_VAR_SCALAR_TYPE_U32,
-    FER_VAR_SCALAR_TYPE_I32,
-    FER_VAR_SCALAR_TYPE_U64,
-    FER_VAR_SCALAR_TYPE_I64,
-    FER_VAR_SCALAR_TYPE_F32,
-    FER_VAR_SCALAR_TYPE_F64,
-} FerVarScalarType;
+#define FER_VAR_PERM_READ ((FerVarPerm)1)
+#define FER_VAR_PERM_WRITE ((FerVarPerm)2)
+#define FER_VAR_PERM_NOTIFY ((FerVarPerm)4)
 
-/// Variable type.
-typedef struct FerVarType {
-    /// Kind of the variable.
-    FerVarKind kind;
-    /// Direction of the variable.
-    FerVarDir dir;
-    /// Type of scalars in the variable if it contains scalars.
-    FerVarScalarType scalar_type;
-    /// Maximum number of items in the variable if it is array.
-    size_t array_max_len;
+/// Variable value type.
+typedef enum {
+    FER_VAR_TYPE_U8 = 0,
+    FER_VAR_TYPE_I8,
+    FER_VAR_TYPE_U16,
+    FER_VAR_TYPE_I16,
+    FER_VAR_TYPE_U32,
+    FER_VAR_TYPE_I32,
+    FER_VAR_TYPE_U64,
+    FER_VAR_TYPE_I64,
+    FER_VAR_TYPE_F32,
+    FER_VAR_TYPE_F64,
 } FerVarType;
+
+/// Information about variable.
+typedef struct {
+    /// Permissions of the variable.
+    FerVarPerm perm;
+    /// Type of variable itself or its items.
+    FerVarType type;
+    /// Maximum number of items in the variable. 0 if variable is scalar.
+    size_t max_len;
+} FerVarInfo;
+
+/// Variable value.
+typedef struct {
+    /// Pointer to variable data that must be interpreted according to variable type and length.
+    /// Must not be overwritten itself, only data it points to.
+    void *data;
+    /// Current number of items in `data`.
+    /// Must be set on write.
+    /// + For scalars simply ignored,
+    /// + For arrays must be less or equal to `FerVarType::max_len`.
+    size_t len;
+} FerVarValue;
 
 /// Initialize application.
 extern void fer_app_init();
@@ -54,13 +63,15 @@ void fer_app_exit(int code);
 
 /// Initialize variable.
 extern void fer_var_init(FerVar *var);
-/// Request record processing.
-void fer_var_request_proc(FerVar *var);
+/// Notify that variable is ready to process (read or write).
+void fer_var_notify(FerVar *var);
 /// Asynchronous variable processing begin.
 /// NOTE: Variable passed to this function is automatically locked during the call.
 extern void fer_var_proc_begin(FerVar *var);
-/// Notify that asynchronous variable processing complete.
-void fer_var_complete_proc(FerVar *var);
+/// Notify that variable asynchronous read complete.
+void fer_var_read_complete(FerVar *var, FerVarStatus status);
+/// Notify that variable asynchronous write complete.
+void fer_var_write_complete(FerVar *var, FerVarStatus status);
 /// Asynchronous variable processing end.
 /// NOTE: Variable passed to this function is automatically locked during the call.
 extern void fer_var_proc_end(FerVar *var);
@@ -73,21 +84,10 @@ void fer_var_unlock(FerVar *var);
 
 /// Variable name.
 const char *fer_var_name(FerVar *var);
-/// Variable type information.
-FerVarType fer_var_type(FerVar *var);
-
-/// Raw variable data that must be interpreted according to variable type.
-/// + Scalars - pointer to scalar value.
-/// + Arrays - pointer to the beginning of array of values.
-void *fer_var_data(FerVar *var);
-/// Current number of items in variable.
-/// Always less or equal than `fer_var_array_max_size`.
-/// Variable must be an array.
-size_t fer_var_array_len(FerVar *var);
-/// Set new number of items in variable.
-/// Must be less or equal than `fer_var_array_max_size`.
-/// Variable must be an array.
-void fer_var_array_set_len(FerVar *var, size_t new_size);
+/// Variable permissions.
+FerVarInfo fer_var_info(FerVar *var);
+/// Get pointer to variable value.
+FerVarValue *fer_var_data(FerVar *var);
 
 /// Get user data.
 void *fer_var_user_data(FerVar *var);

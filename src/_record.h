@@ -24,6 +24,7 @@ typedef enum FerEpicsRecordType {
 typedef struct FerEpicsVar {
     FerVarType type;
     void *data;
+
 } FerEpicsVar;
 
 /// Private data to store in a record.
@@ -35,21 +36,21 @@ typedef struct FerEpicsRecordDpvt {
     /// Scan list for I/O Intr.
     /// NULL if record scanning is not an `I/O Intr`.
     IOSCANPVT ioscan_list;
-    /// Interface variable informaion.
-    FerEpicsVar *var_info;
+    /// Interface variable.
+    FerEpicsVar *var;
     /// User data.
     void *user_data;
 } FerEpicsRecordDpvt;
 
 /// Initialize record.
-void fer_epics_record_init(dbCommon *rec, FerEpicsRecordType type, FerEpicsVar *var_info);
+void fer_epics_record_init(dbCommon *rec, FerEpicsRecordType type, FerEpicsVar *var);
 /// Deinitialize record.
 void fer_epics_record_deinit(dbCommon *rec);
 
 /// Get private data from record.
 FerEpicsRecordDpvt *fer_epics_record_dpvt(dbCommon *rec);
 /// Get interface variable info.
-FerEpicsVar *fer_epics_record_var_info(dbCommon *rec);
+FerEpicsVar *fer_epics_record_var(dbCommon *rec);
 
 /// Initialize record scan list.
 IOSCANPVT fer_epics_record_ioscan_create(dbCommon *rec);
