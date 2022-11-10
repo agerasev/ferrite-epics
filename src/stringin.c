@@ -9,8 +9,8 @@
 #include "_macros.h"
 #include "_record.h"
 
-STRING_STORE(_load, stringinRecord)
-STRING_LOAD(_store, stringinRecord)
+STRING_STORE(_store, stringinRecord)
+STRING_LOAD(_load, stringinRecord)
 
 static long init(stringinRecord *rec) {
     fer_epics_record_init(

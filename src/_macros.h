@@ -44,7 +44,7 @@
     static void ident(rec_type *rec) { \
         _GET_VAR(var, rec); \
         size_t len = strnlen((char *)rec->val, STRING_LEN - 1); \
-        fer_epics_var_store_data(var, rec->val, len); \
+        fer_epics_var_store_data(var, (void *)rec->val, len); \
     }
 
 #define STRING_LOAD(ident, rec_type) \
