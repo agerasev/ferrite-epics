@@ -23,7 +23,7 @@ Ferrite_SRCS += \
 	Ferrite.c \
 	_interface.c \
 	_record.c \
-	_array_record.c \
+	_variable.c \
 	ai.c \
 	ao.c \
 	aai.c \

@@ -4,20 +4,20 @@
 #include <dbLock.h>
 #include <epicsExit.h>
 
-#include "_array_record.h"
 #include "_assert.h"
 #include "_record.h"
+#include "_variable.h"
 
 void fer_app_exit(int code) {
     epicsExit(code);
 }
 
-void fer_var_request_proc(FerVar *var) {
+void fer_var_request(FerVar *var) {
     fer_epics_record_request_proc((dbCommon *)var);
 }
 
-void fer_var_complete_proc(FerVar *var) {
-    fer_epics_record_complete_proc((dbCommon *)var);
+void fer_var_commit(FerVar *var, FerVarAction action) {
+    fer_epics_record_complete_proc((dbCommon *)var, action);
 }
 
 void fer_var_lock(FerVar *var) {
@@ -32,21 +32,20 @@ const char *fer_var_name(FerVar *var) {
     return ((dbCommon *)var)->name;
 }
 
-FerVarType fer_var_type(FerVar *var) {
-    return fer_epics_record_var_info((dbCommon *)var)->type;
+FerVarInfo fer_var_info(FerVar *var) {
+    return fer_epics_record_var((dbCommon *)var)->info;
 }
 
-void *fer_var_data(FerVar *var) {
-    return fer_epics_record_var_info((dbCommon *)var)->data;
+FerVarValue *fer_var_value(FerVar *var) {
+    return fer_epics_record_var((dbCommon *)var)->value;
 }
 
-size_t fer_var_array_len(FerVar *var) {
-    return (size_t)(*fer_epics_record_var_array_info((dbCommon *)var)->len_ptr);
+size_t *fer_var_value_len(FerVar *var) {
+    fer_epics_var_value_len(fer_epics_record_var((dbCommon *)var));
 }
 
-void fer_var_array_set_len(FerVar *var, size_t new_size) {
-    fer_epics_assert(new_size <= fer_var_type(var).array_max_len);
-    *fer_epics_record_var_array_info((dbCommon *)var)->len_ptr = (epicsUInt32)new_size;
+void *fer_var_value_data(FerVar *var) {
+    fer_epics_var_value_data(fer_epics_record_var((dbCommon *)var));
 }
 
 void *fer_var_user_data(FerVar *var) {

@@ -6,35 +6,32 @@
 #include <recGbl.h>
 #include <waveformRecord.h>
 
-#include "_array_record.h"
+#include "_macros.h"
 #include "_record.h"
 
+ARRAY_STORE(_store, waveformRecord)
+ARRAY_LOAD(_load, waveformRecord)
+
 static long init(waveformRecord *rec) {
-    FerEpicsVarArray *var_info = (FerEpicsVarArray *)malloc(sizeof(FerEpicsVarArray));
-    var_info->base.type = (FerVarType){
-        FER_VAR_KIND_ARRAY,
-        FER_VAR_DIR_WRITE,
-        fer_epics_convert_scalar_type((menuFtype)rec->ftvl),
-        rec->nelm,
-    };
-    var_info->item_size = fer_epics_scalar_type_size((menuFtype)rec->ftvl);
-
-    fer_epics_record_array_init((dbCommon *)rec, FER_EPICS_RECORD_TYPE_WAVEFORM, var_info);
+    fer_epics_record_init(
+        (dbCommon *)rec,
+        (FerEpicsRecordInfo){
+            .dir = FER_EPICS_RECORD_DIR_INPUT,
+            .store = (FerEpicsRecordStoreFunc)_store,
+            .load = (FerEpicsRecordLoadFunc)_load,
+        },
+        fer_epics_var_create((FerVarInfo){
+            .perm = FER_VAR_PERM_WRITE,
+            .type = fer_epics_convert_type((menuFtype)rec->ftvl),
+            .max_len = rec->nelm,
+        }));
     return 0;
 }
 
-static long get_ioint_info(int cmd, waveformRecord *rec, IOSCANPVT *ppvt) {
-    *ppvt = fer_epics_record_ioscan_create((dbCommon *)rec);
-    return 0;
-}
+GET_IOINT_INFO(waveformRecord)
 
 static long read(waveformRecord *rec) {
-    if (rec->pact) {
-        fer_epics_record_array_copy_data((dbCommon *)rec, rec->bptr, &rec->nord);
-    }
-
-    fer_epics_record_process((dbCommon *)rec);
-    return 0;
+    return fer_epics_record_process((dbCommon *)rec);
 }
 
 struct WaveformRecordCallbacks {
