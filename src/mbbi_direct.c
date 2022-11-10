@@ -8,30 +8,29 @@
 #include "_macros.h"
 #include "_record.h"
 
-static long init(mbbiDirectRecord *rec) {
-    FerEpicsVar *var = fer_epics_var_create((FerVarInfo){
-        .perm = FER_VAR_PERM_WRITE,
-        .type = FER_VAR_TYPE_U32,
-        .max_len = 0,
-    });
+SCALAR_STORE(_store, mbbiDirectRecord)
+SCALAR_LOAD(_load, mbbiDirectRecord)
 
-    fer_epics_record_init((dbCommon *)rec, var);
+static long init(mbbiDirectRecord *rec) {
+    fer_epics_record_init(
+        (dbCommon *)rec,
+        (FerEpicsRecordInfo){
+            .dir = FER_EPICS_RECORD_DIR_INPUT,
+            .store = (FerEpicsRecordStoreFunc)_store,
+            .load = (FerEpicsRecordLoadFunc)_load,
+        },
+        fer_epics_var_create((FerVarInfo){
+            .perm = FER_VAR_PERM_WRITE,
+            .type = FER_VAR_TYPE_U32,
+            .max_len = 0,
+        }));
     return 0;
 }
 
 GET_IOINT_INFO(mbbiDirectRecord)
 
-SCALAR_STORE(_store, mbbiDirectRecord)
-SCALAR_LOAD(_load, mbbiDirectRecord)
-
 static long read(mbbiDirectRecord *rec) {
-    static const FerEpicsRecordInfo info = {
-        .dir = FER_EPICS_RECORD_DIR_INPUT,
-        .load = (FerEpicsRecordLoadFunc)_load,
-        .store = (FerEpicsRecordStoreFunc)_store,
-    };
-
-    long st = fer_epics_record_process((dbCommon *)rec, &info);
+    long st = fer_epics_record_process((dbCommon *)rec);
     if (st == 0) {
         return 2;
     } else {
@@ -45,7 +44,7 @@ struct MbbiDirectRecordCallbacks {
     DEVSUPFUN init;
     DEVSUPFUN init_record;
     DEVSUPFUN get_ioint_info;
-    DEVSUPFUN read_ai;
+    DEVSUPFUN read;
 };
 
 struct MbbiDirectRecordCallbacks mbbi_direct_record_handler = {

@@ -15,12 +15,8 @@ void fer_var_request(FerVar *var) {
     fer_epics_record_request_proc((dbCommon *)var);
 }
 
-void fer_var_read_complete(FerVar *var, FerVarStatus status) {
-    fer_epics_record_complete_proc((dbCommon *)var, FER_EPICS_RECORD_OP_READ, (long)status);
-}
-
-void fer_var_write_complete(FerVar *var, FerVarStatus status) {
-    fer_epics_record_complete_proc((dbCommon *)var, FER_EPICS_RECORD_OP_WRITE, (long)status);
+void fer_var_commit(FerVar *var, FerVarAction action) {
+    fer_epics_record_complete_proc((dbCommon *)var, action);
 }
 
 void fer_var_lock(FerVar *var) {

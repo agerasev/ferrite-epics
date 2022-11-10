@@ -9,30 +9,29 @@
 #include "_macros.h"
 #include "_record.h"
 
-static long init(aaoRecord *rec) {
-    FerEpicsVar *var = fer_epics_var_create((FerVarInfo){
-        .perm = FER_VAR_PERM_READ | FER_VAR_PERM_WRITE,
-        .type = fer_epics_convert_type((menuFtype)rec->ftvl),
-        .max_len = rec->nelm,
-    });
+ARRAY_STORE(_store, aaoRecord)
+ARRAY_LOAD(_load, aaoRecord)
 
-    fer_epics_record_init((dbCommon *)rec, var);
+static long init(aaoRecord *rec) {
+    fer_epics_record_init(
+        (dbCommon *)rec,
+        (FerEpicsRecordInfo){
+            .dir = FER_EPICS_RECORD_DIR_OUTPUT,
+            .store = (FerEpicsRecordStoreFunc)_store,
+            .load = (FerEpicsRecordLoadFunc)_load,
+        },
+        fer_epics_var_create((FerVarInfo){
+            .perm = FER_VAR_PERM_READ | FER_VAR_PERM_WRITE,
+            .type = fer_epics_convert_type((menuFtype)rec->ftvl),
+            .max_len = rec->nelm,
+        }));
     return 0;
 }
 
 GET_IOINT_INFO(aaoRecord)
 
-ARRAY_STORE(_store, aaoRecord)
-ARRAY_LOAD(_load, aaoRecord)
-
 static long write(aaoRecord *rec) {
-    static const FerEpicsRecordInfo info = {
-        .dir = FER_EPICS_RECORD_DIR_OUTPUT,
-        .load = (FerEpicsRecordLoadFunc)_load,
-        .store = (FerEpicsRecordStoreFunc)_store,
-    };
-
-    return fer_epics_record_process((dbCommon *)rec, &info);
+    return fer_epics_record_process((dbCommon *)rec);
 }
 
 struct AaoRecordCallbacks {

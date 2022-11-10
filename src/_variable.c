@@ -36,12 +36,12 @@ void fer_epics_var_store_data(FerEpicsVar *var, void *data, size_t len) {
 }
 
 size_t fer_epics_var_load_data(FerEpicsVar *var, void *data) {
-    epicsUInt32 len;
+    size_t len;
     if (var->info.max_len == 0) {
         len = 1;
     } else {
-        fer_epics_assert(len <= var->info.max_len);
         len = var->value.len;
+        fer_epics_assert(len <= var->info.max_len);
     }
     memcpy(data, var->value.data, len * fer_epics_type_size(var->info.type));
     return len;

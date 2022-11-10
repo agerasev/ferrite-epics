@@ -20,7 +20,7 @@ typedef void (*FerEpicsRecordLoadFunc)(dbCommon *);
 typedef struct FerEpicsRecordInfo {
     FerEpicsRecordDir dir;
     FerEpicsRecordStoreFunc store;
-    FerEpicsRecordStoreFunc load;
+    FerEpicsRecordLoadFunc load;
 } FerEpicsRecordInfo;
 
 /// Record operation.
@@ -33,8 +33,7 @@ typedef enum FerEpicsRecordOp {
 /// Record processing request information.
 typedef struct FerEpicsProcReq {
     epicsCallback callback;
-    FerEpicsRecordOp op;
-    long status;
+    FerVarAction action;
 } FerEpicsProcReq;
 
 /// Private data to store in a record.
@@ -44,6 +43,8 @@ typedef struct FerEpicsRecordDpvt {
     /// Scan list for I/O Intr.
     /// NULL if record scanning is not an `I/O Intr`.
     IOSCANPVT ioscan_list;
+    /// Record information.
+    FerEpicsRecordInfo info;
     /// Interface variable.
     FerEpicsVar *var;
     /// User data.
@@ -51,7 +52,7 @@ typedef struct FerEpicsRecordDpvt {
 } FerEpicsRecordDpvt;
 
 /// Initialize record.
-void fer_epics_record_init(dbCommon *rec, FerEpicsVar *var);
+void fer_epics_record_init(dbCommon *rec, FerEpicsRecordInfo info, FerEpicsVar *var);
 /// Deinitialize record.
 void fer_epics_record_deinit(dbCommon *rec);
 
@@ -69,6 +70,6 @@ IOSCANPVT fer_epics_record_ioscan_create(dbCommon *rec);
 /// Request record processing
 void fer_epics_record_request_proc(dbCommon *rec);
 /// Process record.
-long fer_epics_record_process(dbCommon *rec, const FerEpicsRecordInfo *info);
+long fer_epics_record_process(dbCommon *rec);
 /// Notify that process is done.
-void fer_epics_record_complete_proc(dbCommon *rec, FerEpicsRecordOp op, long status);
+void fer_epics_record_complete_proc(dbCommon *rec, FerVarAction action);

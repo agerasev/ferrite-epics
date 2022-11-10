@@ -8,30 +8,29 @@
 #include "_macros.h"
 #include "_record.h"
 
-static long init(boRecord *rec) {
-    FerEpicsVar *var = fer_epics_var_create((FerVarInfo){
-        .perm = FER_VAR_PERM_READ | FER_VAR_PERM_WRITE,
-        .type = FER_VAR_TYPE_U16,
-        .max_len = 0,
-    });
+SCALAR_STORE(_store, boRecord)
+SCALAR_LOAD(_load, boRecord)
 
-    fer_epics_record_init((dbCommon *)rec, var);
+static long init(boRecord *rec) {
+    fer_epics_record_init(
+        (dbCommon *)rec,
+        (FerEpicsRecordInfo){
+            .dir = FER_EPICS_RECORD_DIR_OUTPUT,
+            .load = (FerEpicsRecordLoadFunc)_load,
+            .store = (FerEpicsRecordStoreFunc)_store,
+        },
+        fer_epics_var_create((FerVarInfo){
+            .perm = FER_VAR_PERM_READ | FER_VAR_PERM_WRITE,
+            .type = FER_VAR_TYPE_U16,
+            .max_len = 0,
+        }));
     return 0;
 }
 
 GET_IOINT_INFO(boRecord)
 
-SCALAR_STORE(_store, boRecord)
-SCALAR_LOAD(_load, boRecord)
-
 static long write(boRecord *rec) {
-    static const FerEpicsRecordInfo info = {
-        .dir = FER_EPICS_RECORD_DIR_OUTPUT,
-        .load = (FerEpicsRecordLoadFunc)_load,
-        .store = (FerEpicsRecordStoreFunc)_store,
-    };
-
-    long st = fer_epics_record_process((dbCommon *)rec, &info);
+    long st = fer_epics_record_process((dbCommon *)rec);
     if (st == 0) {
         return 2;
     } else {

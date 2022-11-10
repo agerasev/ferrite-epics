@@ -20,13 +20,13 @@ static void process_callback(epicsCallback *callback) {
     dbScanUnlock(rec);
 }
 
-void fer_epics_record_init(dbCommon *rec, FerEpicsVar *var) {
+void fer_epics_record_init(dbCommon *rec, FerEpicsRecordInfo info, FerEpicsVar *var) {
     FerEpicsRecordDpvt *dpvt = (FerEpicsRecordDpvt *)malloc(sizeof(FerEpicsRecordDpvt));
     fer_epics_assert(dpvt != NULL);
 
     dpvt->process = fer_epics_proc_req_create(rec);
-
     dpvt->ioscan_list = NULL;
+    dpvt->info = info;
     dpvt->var = var;
     dpvt->user_data = NULL;
 
@@ -66,8 +66,7 @@ FerEpicsProcReq fer_epics_proc_req_create(dbCommon *rec) {
     callbackSetUser((void *)rec, &process.callback);
     callbackSetPriority(priorityMedium, &process.callback);
 
-    process.op = FER_EPICS_RECORD_OP_READ;
-    process.status = 0;
+    process.action = FER_VAR_ACTION_DISCARD;
 
     return process;
 }
@@ -75,7 +74,7 @@ FerEpicsProcReq fer_epics_proc_req_create(dbCommon *rec) {
 IOSCANPVT fer_epics_record_ioscan_create(dbCommon *rec) {
     FerEpicsRecordDpvt *dpvt = fer_epics_record_dpvt(rec);
 
-    dpvt->var->info.perm |= FER_VAR_PERM_NOTIFY;
+    dpvt->var->info.perm |= FER_VAR_PERM_REQUEST;
 
     IOSCANPVT ioscan_list;
     scanIoInit(&ioscan_list);
@@ -90,30 +89,41 @@ void fer_epics_record_request_proc(dbCommon *rec) {
     }
 }
 
-long fer_epics_record_process(dbCommon *rec, const FerEpicsRecordInfo *info) {
+long fer_epics_record_process(dbCommon *rec) {
     FerEpicsRecordDpvt *dpvt = fer_epics_record_dpvt(rec);
     if (!rec->pact) {
         rec->pact = true;
-        if (info->dir == FER_EPICS_RECORD_DIR_OUTPUT) {
+        if (dpvt->info.dir == FER_EPICS_RECORD_DIR_OUTPUT) {
             // Store value to buffer.
-            info->store(rec);
+            dpvt->info.store(rec);
         }
         fer_var_proc_begin((FerVar *)rec);
         return 0;
     } else {
-        if (info->dir == FER_EPICS_RECORD_DIR_INPUT || dpvt->process.op == FER_EPICS_RECORD_OP_WRITE) {
-            // Load value from buffer.
-            info->load(rec);
-        }
         rec->pact = false;
+        if ( //
+            dpvt->process.action != FER_VAR_ACTION_DISCARD //
+            && (dpvt->info.dir == FER_EPICS_RECORD_DIR_INPUT || dpvt->process.action == FER_VAR_ACTION_WRITE) //
+        ) {
+            // Load value from buffer.
+            dpvt->info.load(rec);
+        }
         fer_var_proc_end((FerVar *)rec);
-        return dpvt->process.status;
+
+        switch (dpvt->process.action) {
+        case FER_VAR_ACTION_READ:
+        case FER_VAR_ACTION_WRITE:
+            return 0;
+        case FER_VAR_ACTION_DISCARD:
+            return 1;
+        }
+        fer_epics_unreachable();
+        return 1;
     }
 }
 
-void fer_epics_record_complete_proc(dbCommon *rec, FerEpicsRecordOp op, long status) {
+void fer_epics_record_complete_proc(dbCommon *rec, FerVarAction action) {
     FerEpicsProcReq *process = &fer_epics_record_dpvt(rec)->process;
-    process->op = op;
-    process->status = status;
+    process->action = action;
     callbackRequest(&process->callback);
 }

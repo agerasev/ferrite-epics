@@ -1,5 +1,4 @@
 #include <stdlib.h>
-#include <string.h>
 
 #include <devSup.h>
 #include <epicsExport.h>
@@ -10,30 +9,29 @@
 #include "_macros.h"
 #include "_record.h"
 
-static long init(stringinRecord *rec) {
-    FerEpicsVar *var = fer_epics_var_create((FerVarInfo){
-        .perm = FER_VAR_PERM_WRITE,
-        .type = FER_VAR_TYPE_U8,
-        .max_len = STRING_LEN - 1,
-    });
+STRING_STORE(_load, stringinRecord)
+STRING_LOAD(_store, stringinRecord)
 
-    fer_epics_record_init((dbCommon *)rec, var);
+static long init(stringinRecord *rec) {
+    fer_epics_record_init(
+        (dbCommon *)rec,
+        (FerEpicsRecordInfo){
+            .dir = FER_EPICS_RECORD_DIR_INPUT,
+            .store = (FerEpicsRecordStoreFunc)_store,
+            .load = (FerEpicsRecordLoadFunc)_load,
+        },
+        fer_epics_var_create((FerVarInfo){
+            .perm = FER_VAR_PERM_WRITE,
+            .type = FER_VAR_TYPE_U8,
+            .max_len = STRING_LEN - 1,
+        }));
     return 0;
 }
 
 GET_IOINT_INFO(stringinRecord)
 
-STRING_STORE(_load, stringinRecord)
-STRING_LOAD(_store, stringinRecord)
-
 static long read(stringinRecord *rec) {
-    static const FerEpicsRecordInfo info = {
-        .dir = FER_EPICS_RECORD_DIR_INPUT,
-        .load = (FerEpicsRecordLoadFunc)_load,
-        .store = (FerEpicsRecordStoreFunc)_store,
-    };
-
-    return fer_epics_record_process((dbCommon *)rec, &info);
+    return fer_epics_record_process((dbCommon *)rec);
 }
 
 struct StringinRecordCallbacks {
