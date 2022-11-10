@@ -6,6 +6,7 @@
 
 #include "_assert.h"
 #include "_record.h"
+#include "_variable.h"
 
 void fer_app_exit(int code) {
     epicsExit(code);
@@ -36,7 +37,15 @@ FerVarInfo fer_var_info(FerVar *var) {
 }
 
 FerVarValue *fer_var_value(FerVar *var) {
-    return &fer_epics_record_var((dbCommon *)var)->value;
+    return fer_epics_record_var((dbCommon *)var)->value;
+}
+
+size_t *fer_var_value_len(FerVar *var) {
+    fer_epics_var_value_len(fer_epics_record_var((dbCommon *)var));
+}
+
+void *fer_var_value_data(FerVar *var) {
+    fer_epics_var_value_data(fer_epics_record_var((dbCommon *)var));
 }
 
 void *fer_var_user_data(FerVar *var) {

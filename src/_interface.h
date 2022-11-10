@@ -44,16 +44,11 @@ typedef struct FerVarInfo {
 } FerVarInfo;
 
 /// Variable value.
-typedef struct FerVarValue {
-    /// Pointer to variable data that must be interpreted according to variable type and length.
-    /// Must not be overwritten itself, only data it points to.
-    void *data;
-    /// Current number of items in `data`.
-    /// Must be set on write.
-    /// + For scalars simply ignored,
-    /// + For arrays must be less or equal to `FerVarType::max_len`.
-    size_t len;
-} FerVarValue;
+/// Contents (where T is the type of items):
+/// + Scalar: { value: T }
+/// + Vector: { len: usize, data: [T] }
+/// Items of T are properly aligned.
+typedef struct FerVarValue FerVarValue;
 
 /// Initialize application.
 extern void fer_app_init();
@@ -87,6 +82,15 @@ FerVarInfo fer_var_info(FerVar *var);
 /// Get pointer to variable value.
 /// *Requires variable to be locked.*
 FerVarValue *fer_var_value(FerVar *var);
+
+/// Current number of items in `data`.
+/// + For scalars NULL is returned.
+/// + For arrays must be less or equal to `FerVarType::max_len`. Must be set on write.
+size_t *fer_var_value_len(FerVar *var);
+/// Variable data that must be interpreted according to variable type (T) and length.
+/// + For scalars it is simply T.
+/// + For arrays it is [T; len].
+void *fer_var_value_data(FerVar *var);
 
 /// Get user data.
 void *fer_var_user_data(FerVar *var);
