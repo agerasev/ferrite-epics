@@ -2,11 +2,14 @@
 
 #include <stdbool.h>
 #include <stdlib.h>
+#include <string.h>
 
+#include <alarm.h>
 #include <callback.h>
 #include <dbAccess.h>
 #include <dbCommon.h>
 #include <dbScan.h>
+#include <recGbl.h>
 #include <recSup.h>
 
 #include "_assert.h"
@@ -66,7 +69,7 @@ FerEpicsProcReq fer_epics_proc_req_create(dbCommon *rec) {
     callbackSetUser((void *)rec, &process.callback);
     callbackSetPriority(priorityMedium, &process.callback);
 
-    process.action = FER_VAR_ACTION_DISCARD;
+    process.status = FER_VAR_STATUS_ERROR;
 
     return process;
 }
@@ -93,28 +96,30 @@ long fer_epics_record_process(dbCommon *rec) {
     FerEpicsRecordDpvt *dpvt = fer_epics_record_dpvt(rec);
     if (!rec->pact) {
         rec->pact = true;
-        if (dpvt->info.dir == FER_EPICS_RECORD_DIR_OUTPUT) {
-            // Store value to buffer.
-            dpvt->info.store(rec);
-        }
+
+        // Store value from record to buffer.
+        dpvt->info.store(rec);
+
         fer_var_proc_begin((FerVar *)rec);
         return 0;
     } else {
         rec->pact = false;
-        if ( //
-            dpvt->process.action != FER_VAR_ACTION_DISCARD //
-            && (dpvt->info.dir == FER_EPICS_RECORD_DIR_INPUT || dpvt->process.action == FER_VAR_ACTION_WRITE) //
-        ) {
-            // Load value from buffer.
+
+        // Unless a new value been put during processing:
+        if (!(rec->putf && rec->rpro)) {
+            // Load value from buffer to record.
             dpvt->info.load(rec);
+            rec->udf = 0;
         }
+
         fer_var_proc_end((FerVar *)rec);
 
-        switch (dpvt->process.action) {
-        case FER_VAR_ACTION_READ:
-        case FER_VAR_ACTION_WRITE:
+        switch (dpvt->process.status) {
+        case FER_VAR_STATUS_OK:
+            recGblSetSevr(rec, NO_ALARM, NO_ALARM);
             return 0;
-        case FER_VAR_ACTION_DISCARD:
+        case FER_VAR_STATUS_ERROR:
+            recGblSetSevrMsg(rec, COMM_ALARM, INVALID_ALARM, dpvt->process.message);
             return 1;
         }
         fer_epics_unreachable();
@@ -122,8 +127,17 @@ long fer_epics_record_process(dbCommon *rec) {
     }
 }
 
-void fer_epics_record_complete_proc(dbCommon *rec, FerVarAction action) {
+void fer_epics_record_complete_proc(dbCommon *rec, FerVarStatus st, const char *msg, size_t msg_len) {
     FerEpicsProcReq *process = &fer_epics_record_dpvt(rec)->process;
-    process->action = action;
+    process->status = st;
+
+    if (msg != NULL) {
+        size_t len = msg_len < FER_EPICS_STRING_MAX_LEN ? msg_len : FER_EPICS_STRING_MAX_LEN;
+        memcpy(process->message, msg, len);
+        process->message[len] = '\0';
+    } else {
+        process->message[0] = '\0';
+    }
+
     callbackRequest(&process->callback);
 }

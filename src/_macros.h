@@ -5,6 +5,8 @@
 #include <dbCommon.h>
 
 #include "_assert.h"
+#include "_record.h"
+#include "_variable.h"
 
 #define GET_IOINT_INFO(rec_type) \
     static long get_ioint_info(int cmd, rec_type *rec, IOSCANPVT *ppvt) { \
@@ -38,12 +40,10 @@
         rec->nord = fer_epics_var_load_data(var, rec->bptr); \
     }
 
-#define STRING_LEN 40
-
 #define STRING_STORE(ident, rec_type) \
     static void ident(rec_type *rec) { \
         _GET_VAR(var, rec); \
-        size_t len = strnlen((char *)rec->val, STRING_LEN - 1); \
+        size_t len = strnlen((char *)rec->val, FER_EPICS_STRING_MAX_LEN); \
         fer_epics_var_store_data(var, (void *)rec->val, len); \
     }
 

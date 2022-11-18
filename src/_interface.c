@@ -16,8 +16,8 @@ void fer_var_request(FerVar *var) {
     fer_epics_record_request_proc((dbCommon *)var);
 }
 
-void fer_var_commit(FerVar *var, FerVarAction action) {
-    fer_epics_record_complete_proc((dbCommon *)var, action);
+void fer_var_commit(FerVar *var, FerVarStatus st, const char *msg, size_t msg_len) {
+    fer_epics_record_complete_proc((dbCommon *)var, st, msg, msg_len);
 }
 
 void fer_var_lock(FerVar *var) {
@@ -41,11 +41,11 @@ FerVarValue *fer_var_value(FerVar *var) {
 }
 
 size_t *fer_var_value_len(FerVar *var) {
-    fer_epics_var_value_len(fer_epics_record_var((dbCommon *)var));
+    return fer_epics_var_value_len(fer_epics_record_var((dbCommon *)var));
 }
 
 void *fer_var_value_data(FerVar *var) {
-    fer_epics_var_value_data(fer_epics_record_var((dbCommon *)var));
+    return fer_epics_var_value_data(fer_epics_record_var((dbCommon *)var));
 }
 
 void *fer_var_user_data(FerVar *var) {

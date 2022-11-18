@@ -7,6 +7,8 @@
 #include "_interface.h"
 #include "_variable.h"
 
+#define FER_EPICS_STRING_MAX_LEN 39
+
 /// Record direction.
 typedef enum FerEpicsRecordDir {
     FER_EPICS_RECORD_DIR_INPUT,
@@ -33,7 +35,8 @@ typedef enum FerEpicsRecordOp {
 /// Record processing request information.
 typedef struct FerEpicsProcReq {
     epicsCallback callback;
-    FerVarAction action;
+    FerVarStatus status;
+    char message[FER_EPICS_STRING_MAX_LEN + 1];
 } FerEpicsProcReq;
 
 /// Private data to store in a record.
@@ -72,4 +75,4 @@ void fer_epics_record_request_proc(dbCommon *rec);
 /// Process record.
 long fer_epics_record_process(dbCommon *rec);
 /// Notify that process is done.
-void fer_epics_record_complete_proc(dbCommon *rec, FerVarAction action);
+void fer_epics_record_complete_proc(dbCommon *rec, FerVarStatus st, const char *msg, size_t msg_len);

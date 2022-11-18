@@ -7,11 +7,10 @@
 typedef struct FerVar FerVar;
 
 /// Variable processing status.
-typedef enum FerVarAction {
-    FER_VAR_ACTION_DISCARD = 0,
-    FER_VAR_ACTION_READ,
-    FER_VAR_ACTION_WRITE,
-} FerVarAction;
+typedef enum FerVarStatusFlag {
+    FER_VAR_STATUS_OK = 0,
+    FER_VAR_STATUS_ERROR,
+} FerVarStatus;
 
 /// Permissions the variable.
 typedef uint32_t FerVarPerm;
@@ -65,7 +64,7 @@ void fer_var_request(FerVar *var);
 /// NOTE: Variable passed to this function is automatically locked during the call.
 extern void fer_var_proc_begin(FerVar *var);
 /// Notify that variable asynchronous processing complete.
-void fer_var_commit(FerVar *var, FerVarAction action);
+void fer_var_commit(FerVar *var, FerVarStatus st, const char *msg, size_t msg_len);
 /// Asynchronous variable processing end.
 /// NOTE: Variable passed to this function is automatically locked during the call.
 extern void fer_var_proc_end(FerVar *var);
