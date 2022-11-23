@@ -21,7 +21,6 @@ static long init(aaiRecord *rec) {
             .load = (FerEpicsRecordLoadFunc)_load,
         },
         fer_epics_var_create((FerVarInfo){
-            .perm = FER_VAR_PERM_WRITE,
             .type = fer_epics_convert_type((menuFtype)rec->ftvl),
             .max_len = rec->nelm,
         }));

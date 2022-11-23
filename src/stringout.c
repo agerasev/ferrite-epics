@@ -21,7 +21,6 @@ static long init(stringoutRecord *rec) {
             .load = (FerEpicsRecordLoadFunc)_load,
         },
         fer_epics_var_create((FerVarInfo){
-            .perm = FER_VAR_PERM_READ | FER_VAR_PERM_WRITE,
             .type = FER_VAR_TYPE_U8,
             .max_len = FER_EPICS_STRING_MAX_LEN,
         }));

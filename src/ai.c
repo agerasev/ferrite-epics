@@ -20,7 +20,6 @@ static long init(aiRecord *rec) {
             .load = (FerEpicsRecordLoadFunc)_load,
         },
         fer_epics_var_create((FerVarInfo){
-            .perm = FER_VAR_PERM_WRITE,
             .type = FER_VAR_TYPE_F64,
             .max_len = 0,
         }));

@@ -20,7 +20,6 @@ static long init(mbboDirectRecord *rec) {
             .load = (FerEpicsRecordLoadFunc)_load,
         },
         fer_epics_var_create((FerVarInfo){
-            .perm = FER_VAR_PERM_READ | FER_VAR_PERM_WRITE,
             .type = FER_VAR_TYPE_U32,
             .max_len = 0,
         }));
