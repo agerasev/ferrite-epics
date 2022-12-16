@@ -12,12 +12,6 @@ typedef enum FerVarStatusFlag {
     FER_VAR_STATUS_ERROR,
 } FerVarStatus;
 
-/// Permissions the variable.
-typedef uint32_t FerVarPerm;
-#define FER_VAR_PERM_READ ((FerVarPerm)1)
-#define FER_VAR_PERM_WRITE ((FerVarPerm)2)
-#define FER_VAR_PERM_REQUEST ((FerVarPerm)4)
-
 /// Variable value type.
 typedef enum FerVarType {
     FER_VAR_TYPE_U8 = 0,
@@ -34,8 +28,6 @@ typedef enum FerVarType {
 
 /// Information about variable.
 typedef struct FerVarInfo {
-    /// Permissions of the variable.
-    FerVarPerm perm;
     /// Type of variable itself or its items.
     FerVarType type;
     /// Maximum number of items in the variable. 0 if variable is scalar.

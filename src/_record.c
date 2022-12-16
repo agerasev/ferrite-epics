@@ -77,8 +77,6 @@ FerEpicsProcReq fer_epics_proc_req_create(dbCommon *rec) {
 IOSCANPVT fer_epics_record_ioscan_create(dbCommon *rec) {
     FerEpicsRecordDpvt *dpvt = fer_epics_record_dpvt(rec);
 
-    dpvt->var->info.perm |= FER_VAR_PERM_REQUEST;
-
     IOSCANPVT ioscan_list;
     scanIoInit(&ioscan_list);
     dpvt->ioscan_list = ioscan_list;
@@ -89,6 +87,8 @@ void fer_epics_record_request_proc(dbCommon *rec) {
     FerEpicsRecordDpvt *dpvt = fer_epics_record_dpvt(rec);
     if (dpvt->ioscan_list != NULL) {
         scanIoRequest(dpvt->ioscan_list);
+    } else {
+        callbackRequest(&dpvt->process.callback);
     }
 }
 
