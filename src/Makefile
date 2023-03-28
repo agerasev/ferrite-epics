@@ -31,6 +31,8 @@ Ferrite_SRCS += \
 	waveform.c \
 	bi.c \
 	bo.c \
+	longin.c \
+	longout.c \
 	mbbi_direct.c \
 	mbbo_direct.c \
 	stringin.c \
