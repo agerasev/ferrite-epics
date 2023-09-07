@@ -36,7 +36,9 @@ Ferrite_SRCS += \
 	mbbi_direct.c \
 	mbbo_direct.c \
 	stringin.c \
-	stringout.c
+	stringout.c \
+	lsi.c \
+	lso.c
 
 Ferrite_LIBS += $(EPICS_BASE_IOC_LIBS)
 

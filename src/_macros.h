@@ -28,17 +28,20 @@
         fer_epics_assert(fer_epics_var_load_data(var, (void *)&rec->val) == 1); \
     }
 
-#define ARRAY_STORE(ident, rec_type) \
+#define GENERIC_ARRAY_STORE(ident, rec_type, data_field, len_field) \
     static void ident(rec_type *rec) { \
         _GET_VAR(var, rec); \
-        fer_epics_var_store_data(var, rec->bptr, rec->nord); \
+        fer_epics_var_store_data(var, rec->data_field, rec->len_field); \
     }
 
-#define ARRAY_LOAD(ident, rec_type) \
+#define GENERIC_ARRAY_LOAD(ident, rec_type, data_field, len_field) \
     static void ident(rec_type *rec) { \
         _GET_VAR(var, rec); \
-        rec->nord = fer_epics_var_load_data(var, rec->bptr); \
+        rec->len_field = fer_epics_var_load_data(var, rec->data_field); \
     }
+
+#define ARRAY_STORE(ident, rec_type) GENERIC_ARRAY_STORE(ident, rec_type, bptr, nord)
+#define ARRAY_LOAD(ident, rec_type) GENERIC_ARRAY_LOAD(ident, rec_type, bptr, nord)
 
 #define STRING_STORE(ident, rec_type) \
     static void ident(rec_type *rec) { \
